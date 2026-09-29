@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
-const API_URL = "http://192.168.0.101:5000/api/items";
+const API_URL = "https://absher-deshboard-backend.vercel.app/api/items";
 
 
 const EMPTY_FORM = {
