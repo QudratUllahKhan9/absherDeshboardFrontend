@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-const STORAGE_KEY = "peoplehub_records_v2";
+const STORAGE_KEY = "peoplehub_records_v4";
 const THEME_KEY = "peoplehub_theme";
 
 const IMAGE_FIELDS = [
@@ -15,13 +15,14 @@ const IMAGE_FIELDS = [
 
 const EMPTY_FORM = {
   name: "",
-  idNo: "2555290341",        // Iqama Number
+  idNo: "2555290341",        // Iqama Number[cite: 3]
   phone: "",
-  passportNo: "PT4133313",   // Passport Number
-  passportExpiry: "21/02/2030",
-  iqamaExpiry: "22/07/2027",
-  travelStatus: "Inside the Kingdom",
-  balance: "0.00 SAR",
+  password: "",              // New Password Field
+  passportNo: "PT4133313",   // Passport Number[cite: 1]
+  passportExpiry: "21/02/2030",[cite: 1]
+  iqamaExpiry: "22/07/2027",[cite: 3]
+  travelStatus: "Inside the Kingdom",[cite: 2]
+  balance: "0.00 SAR",[cite: 1]
 };
 
 function readRecords() {
@@ -138,6 +139,7 @@ export default function App() {
       name: form.name.trim(),
       idNo: form.idNo.trim(),
       phone: form.phone.trim(),
+      password: form.password.trim(),
       passportNo: form.passportNo.trim(),
       passportExpiry: form.passportExpiry.trim(),
       iqamaExpiry: form.iqamaExpiry.trim(),
@@ -170,6 +172,7 @@ export default function App() {
       name: item.name || "",
       idNo: item.idNo || "",
       phone: item.phone || "",
+      password: item.password || "",
       passportNo: item.passportNo || "",
       passportExpiry: item.passportExpiry || "",
       iqamaExpiry: item.iqamaExpiry || "",
@@ -268,7 +271,7 @@ export default function App() {
             </h1>
 
             <p>
-              Manage people details, Iqama/Passport info, travel records, and documents in one workspace.
+              Manage people details, Iqama/Passport info, passwords, travel records, and documents in one workspace.
             </p>
 
             <a className="hero-link" href="#records">
@@ -343,7 +346,7 @@ export default function App() {
               <h2>
                 {editingId ? "Edit person record" : "Create a new record"}
               </h2>
-              <p>Enter the personal, passport, and residency details.</p>
+              <p>Enter personal details, contact info, password, and official documents data.</p>
             </div>
 
             {editingId && (
@@ -358,6 +361,14 @@ export default function App() {
           </div>
 
           <form id="record-form" onSubmit={handleSubmit}>
+            {/* Section 1: Basic Information */}
+            <div className="upload-heading" style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}>
+              <div>
+                <span className="eyebrow">SECTION 1</span>
+                <h3>Basic, Contact & Password Info</h3>
+              </div>
+            </div>
+
             <div className="form-grid">
               <label className="field">
                 <span>Full name <b>*</b></span>
@@ -368,19 +379,6 @@ export default function App() {
                   placeholder="Enter full name"
                   autoComplete="off"
                   maxLength={120}
-                  required
-                />
-              </label>
-
-              <label className="field">
-                <span>Iqama Number <b>*</b></span>
-                <input
-                  name="idNo"
-                  value={form.idNo}
-                  onChange={handleChange}
-                  placeholder="Enter Iqama number"
-                  autoComplete="off"
-                  maxLength={80}
                   required
                 />
               </label>
@@ -399,6 +397,19 @@ export default function App() {
               </label>
 
               <label className="field">
+                <span>Password</span>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter password"
+                  autoComplete="off"
+                  maxLength={50}
+                />
+              </label>
+
+              <label className="field">
                 <span>Passport Number</span>
                 <input
                   name="passportNo"
@@ -407,6 +418,29 @@ export default function App() {
                   placeholder="Enter passport number"
                   autoComplete="off"
                   maxLength={30}
+                />
+              </label>
+            </div>
+
+            {/* Section 2: Official Documents & Absher Data */}
+            <div className="upload-heading">
+              <div>
+                <span className="eyebrow">SECTION 2</span>
+                <h3>Absher & Residency Details</h3>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label className="field">
+                <span>Iqama Number <b>*</b></span>
+                <input
+                  name="idNo"
+                  value={form.idNo}
+                  onChange={handleChange}
+                  placeholder="Enter Iqama number"
+                  autoComplete="off"
+                  maxLength={80}
+                  required
                 />
               </label>
 
@@ -459,9 +493,10 @@ export default function App() {
               </label>
             </div>
 
+            {/* Section 3: Image Library */}
             <div className="upload-heading">
               <div>
-                <span className="eyebrow">IMAGE LIBRARY</span>
+                <span className="eyebrow">SECTION 3</span>
                 <h3>Photos & documents</h3>
               </div>
               <span className="file-limit">JPG, PNG, WEBP · Max 1.5 MB each</span>
@@ -615,12 +650,12 @@ export default function App() {
 
                     <div className="person-meta">
                       <div>
-                        <span>PASSPORT</span>
-                        <b>{item.passportNo || "—"}</b>
+                        <span>PHONE & PASSWORD</span>
+                        <b>{item.phone || "—"} / {item.password ? "••••" : "—"}</b>
                       </div>
                       <div>
-                        <span>IQAMA EXP</span>
-                        <b>{item.iqamaExpiry || "—"}</b>
+                        <span>PASSPORT</span>
+                        <b>{item.passportNo || "—"}</b>
                       </div>
                     </div>
 
