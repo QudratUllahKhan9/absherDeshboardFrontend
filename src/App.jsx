@@ -15,14 +15,14 @@ const IMAGE_FIELDS = [
 
 const EMPTY_FORM = {
   name: "",
-  idNo: "2555290341",        // Iqama Number[cite: 3]
+  idNo: "2555290341",
   phone: "",
-  password: "",              // New Password Field
-  passportNo: "PT4133313",   // Passport Number[cite: 1]
-  passportExpiry: "21/02/2030",[cite: 1]
-  iqamaExpiry: "22/07/2027",[cite: 3]
-  travelStatus: "Inside the Kingdom",[cite: 2]
-  balance: "0.00 SAR",[cite: 1]
+  password: "",
+  passportNo: "PT4133313",
+  passportExpiry: "21/02/2030",
+  iqamaExpiry: "22/07/2027",
+  travelStatus: "Inside the Kingdom",
+  balance: "0.00 SAR",
 };
 
 function readRecords() {
@@ -361,7 +361,6 @@ export default function App() {
           </div>
 
           <form id="record-form" onSubmit={handleSubmit}>
-            {/* Section 1: Basic Information */}
             <div className="upload-heading" style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}>
               <div>
                 <span className="eyebrow">SECTION 1</span>
@@ -422,7 +421,6 @@ export default function App() {
               </label>
             </div>
 
-            {/* Section 2: Official Documents & Absher Data */}
             <div className="upload-heading">
               <div>
                 <span className="eyebrow">SECTION 2</span>
@@ -493,7 +491,6 @@ export default function App() {
               </label>
             </div>
 
-            {/* Section 3: Image Library */}
             <div className="upload-heading">
               <div>
                 <span className="eyebrow">SECTION 3</span>
