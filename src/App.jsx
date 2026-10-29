@@ -15,7 +15,7 @@ const IMAGE_FIELDS = [
 
 const EMPTY_FORM = {
   name: "",
-  idNo: "",
+  idNo: "2555290341", // Populated with Iqama Number from Absher data[cite: 3]
   phone: "",
 };
 
@@ -253,8 +253,7 @@ export default function App() {
             </h1>
 
             <p>
-              Manage people details, photos and documents in one organized
-              workspace.
+              Manage people details, photos, passport details (PT4133313)[cite: 1], and documents in one organized workspace.
             </p>
 
             <a className="hero-link" href="#records">
@@ -362,7 +361,7 @@ export default function App() {
 
               <label className="field">
                 <span>
-                  ID number <b>*</b>
+                  ID number (Iqama) <b>*</b>
                 </span>
                 <input
                   name="idNo"
