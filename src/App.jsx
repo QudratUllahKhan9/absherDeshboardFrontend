@@ -1,338 +1,187 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const STORAGE_KEY = "peoplehub_records_v1";
+const THEME_KEY = "peoplehub_theme";
 
 const IMAGE_FIELDS = [
-  { key: "userImage", label: "Profile photo", icon: "👤", url: "userImageUrl" },
-  { key: "cardImage", label: "ID card", icon: "🪪", url: "cardImageUrl" },
-  { key: "iqamaImage", label: "Iqama", icon: "📄", url: "iqamaImageUrl" },
-  { key: "qrCode1", label: "QR code 1", icon: "▦", url: "qrCode1Url" },
-  { key: "drivingLicenseImage", label: "Driving licence", icon: "🚘", url: "drivingLicenseImageUrl" },
-  { key: "qrCode2", label: "QR code 2", icon: "▦", url: "qrCode2Url" },
+  { key: "userImage", label: "Profile Photo", icon: "👤" },
+  { key: "cardImage", label: "ID Card", icon: "🪪" },
+  { key: "iqamaImage", label: "Iqama", icon: "📄" },
+  { key: "qrCode1", label: "QR Code 1", icon: "▦" },
+  { key: "drivingLicenseImage", label: "Driving Licence", icon: "🚘" },
+  { key: "qrCode2", label: "QR Code 2", icon: "▦" },
 ];
 
 const EMPTY_FORM = {
   name: "",
   idNo: "",
   phone: "",
-  password: "",
 };
 
-async function api(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
-    credentials: "include",
-    ...options,
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.message || `Request failed (${response.status})`);
+function readRecords() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
   }
+}
 
-  return data;
+function createId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export default function App() {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(readRecords);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [files, setFiles] = useState({});
-  const [previews, setPreviews] = useState({});
-  const [removedImages, setRemovedImages] = useState([]);
+  const [images, setImages] = useState({});
   const [editingId, setEditingId] = useState(null);
   const [query, setQuery] = useState("");
   const [theme, setTheme] = useState(
-    () => localStorage.getItem("people_theme") || "light"
+    () => localStorage.getItem(THEME_KEY) || "light"
   );
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [toast, setToast] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [login, setLogin] = useState({
-    username: "",
-    password: "",
-  });
-  const [loginLoading, setLoginLoading] = useState(false);
+  const [toast, setToast] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const inputRefs = useRef({});
-  const toastTimer = useRef(null);
-
-  const notify = (type, message) => {
-    setToast({ type, message });
-    window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 3500);
-  };
-
-  const loadItems = async () => {
-    const data = await api("/items");
-    setItems(Array.isArray(data.items) ? data.items : []);
-  };
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {
+      notify("Storage is full. Remove some large images and try again.");
+    }
+  }, [items]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem("people_theme", theme);
+    localStorage.setItem(THEME_KEY, theme);
   }, [theme]);
 
-  useEffect(() => {
-    let active = true;
+  function notify(message) {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 3000);
+  }
 
-    async function initialize() {
-      try {
-        await api("/auth/me");
-        if (!active) return;
-        setAuthenticated(true);
-        await loadItems();
-      } catch {
-        if (active) setAuthenticated(false);
-      } finally {
-        if (active) setInitialLoading(false);
-      }
-    }
-
-    initialize();
-
-    return () => {
-      active = false;
-      window.clearTimeout(toastTimer.current);
-    };
-  }, []);
-
-  const handleLogin = async (event) => {
-    event.preventDefault();
-    setLoginLoading(true);
-
-    try {
-      await api("/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(login),
-      });
-
-      setAuthenticated(true);
-      setLogin({ username: "", password: "" });
-      await loadItems();
-      notify("success", "Welcome back!");
-    } catch (error) {
-      notify("error", error.message);
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  const resetForm = () => {
-    Object.values(previews).forEach((url) => {
-      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
-    });
-
+  function resetForm() {
     setForm(EMPTY_FORM);
-    setFiles({});
-    setPreviews({});
-    setRemovedImages([]);
+    setImages({});
     setEditingId(null);
-    setShowPassword(false);
 
-    Object.values(inputRefs.current).forEach((element) => {
-      if (element) element.value = "";
-    });
-  };
+    const formElement = document.getElementById("record-form");
+    formElement?.reset();
+  }
 
-  const handleLogout = async () => {
-    try {
-      await api("/auth/logout", { method: "POST" });
-    } catch {
-      // The session may already have expired.
-    }
+  function handleChange(event) {
+    const { name, value } = event.target;
+    setForm((previous) => ({ ...previous, [name]: value }));
+  }
 
-    resetForm();
-    setAuthenticated(false);
-    setItems([]);
-  };
-
-  const handleImage = (key, file) => {
+  function handleImage(event, key) {
+    const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      notify("error", "Choose a JPG, PNG or WEBP image.");
+    if (!file.type.startsWith("image/")) {
+      notify("Please select an image file.");
+      event.target.value = "";
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      notify("error", "Each image must be 5 MB or smaller.");
+    if (file.size > 1.5 * 1024 * 1024) {
+      notify("Please choose an image smaller than 1.5 MB.");
+      event.target.value = "";
       return;
     }
 
-    const previewUrl = URL.createObjectURL(file);
+    const reader = new FileReader();
 
-    setPreviews((old) => {
-      const previousUrl = old[key];
+    reader.onload = () => {
+      setImages((previous) => ({
+        ...previous,
+        [key]: reader.result,
+      }));
+    };
 
-      if (previousUrl?.startsWith("blob:")) {
-        URL.revokeObjectURL(previousUrl);
-      }
+    reader.onerror = () => notify("Could not read this image.");
+    reader.readAsDataURL(file);
+  }
 
-      return { ...old, [key]: previewUrl };
-    });
-
-    setFiles((old) => ({
-      ...old,
-      [key]: file,
-    }));
-
-    setRemovedImages((old) => old.filter((name) => name !== key));
-  };
-
-  const removeImage = (field) => {
-    const key = field.key;
-
-    setFiles((old) => {
-      const next = { ...old };
+  function removeImage(key) {
+    setImages((previous) => {
+      const next = { ...previous };
       delete next[key];
       return next;
     });
 
-    setPreviews((old) => {
-      if (old[key]?.startsWith("blob:")) {
-        URL.revokeObjectURL(old[key]);
-      }
+    const input = document.getElementById(`image-${key}`);
+    if (input) input.value = "";
+  }
 
-      const next = { ...old };
-      delete next[key];
-      return next;
-    });
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!form.name.trim() || !form.idNo.trim() || !form.phone.trim()) {
+      notify("Please complete all required fields.");
+      return;
+    }
+
+    setSaving(true);
+
+    const previousRecord = items.find((item) => item.id === editingId);
+
+    const record = {
+      id: editingId || createId(),
+      name: form.name.trim(),
+      idNo: form.idNo.trim(),
+      phone: form.phone.trim(),
+      images: {
+        ...(previousRecord?.images || {}),
+        ...images,
+      },
+      updatedAt: new Date().toISOString(),
+    };
 
     if (editingId) {
-      setRemovedImages((old) =>
-        old.includes(key) ? old : [...old, key]
+      setItems((previous) =>
+        previous.map((item) => (item.id === editingId ? record : item))
       );
+      notify("Record updated successfully.");
+    } else {
+      setItems((previous) => [record, ...previous]);
+      notify("Record added successfully.");
     }
 
-    if (inputRefs.current[key]) {
-      inputRefs.current[key].value = "";
-    }
-  };
-
-  const startEdit = (item) => {
     resetForm();
+    setSaving(false);
+  }
 
-    setEditingId(item._id);
+  function startEdit(item) {
+    setEditingId(item.id);
     setForm({
       name: item.name || "",
       idNo: item.idNo || "",
       phone: item.phone || "",
-      password: "",
     });
+    setImages(item.images || {});
 
-    const existingImages = {};
-
-    IMAGE_FIELDS.forEach((field) => {
-      if (item[field.url]) {
-        existingImages[field.key] = item[field.url];
-      }
+    document.getElementById("form-section")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
     });
+  }
 
-    setPreviews(existingImages);
+  function deleteRecord(item) {
+    const confirmed = window.confirm(
+      `Delete the record for "${item.name}"?`
+    );
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+    if (!confirmed) return;
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+    setItems((previous) => previous.filter((record) => record.id !== item.id));
 
-    if (loading) return;
+    if (editingId === item.id) resetForm();
 
-    if (!form.name.trim() || !form.idNo.trim() || !form.phone.trim()) {
-      notify("error", "Name, ID number and phone are required.");
-      return;
-    }
-
-    if (!editingId && form.password.length < 12) {
-      notify("error", "Use a password with at least 12 characters.");
-      return;
-    }
-
-    if (editingId && form.password && form.password.length < 12) {
-      notify("error", "New password must have at least 12 characters.");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const body = new FormData();
-
-      body.append("name", form.name.trim());
-      body.append("idNo", form.idNo.trim());
-      body.append("phone", form.phone.trim());
-
-      if (form.password) {
-        body.append("password", form.password);
-      }
-
-      body.append("removedImages", JSON.stringify(removedImages));
-
-      IMAGE_FIELDS.forEach(({ key }) => {
-        if (files[key]) body.append(key, files[key]);
-      });
-
-      const data = await api(
-        editingId ? `/items/${editingId}` : "/items",
-        {
-          method: editingId ? "PUT" : "POST",
-          body,
-        }
-      );
-
-      if (editingId) {
-        setItems((old) =>
-          old.map((item) =>
-            item._id === editingId ? data.item : item
-          )
-        );
-      } else {
-        setItems((old) => [data.item, ...old]);
-      }
-
-      notify(
-        "success",
-        editingId ? "Record updated successfully." : "Record saved successfully."
-      );
-
-      resetForm();
-    } catch (error) {
-      notify("error", error.message || "Could not save record.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (item) => {
-    if (
-      !window.confirm(
-        `Delete the record for "${item.name}"? This cannot be undone.`
-      )
-    ) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await api(`/items/${item._id}`, { method: "DELETE" });
-
-      setItems((old) => old.filter((entry) => entry._id !== item._id));
-
-      if (editingId === item._id) resetForm();
-
-      notify("success", "Record deleted.");
-    } catch (error) {
-      notify("error", error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    notify("Record deleted.");
+  }
 
   const filteredItems = useMemo(() => {
     const term = query.trim().toLowerCase();
@@ -346,67 +195,8 @@ export default function App() {
     );
   }, [items, query]);
 
-  if (initialLoading) {
-    return (
-      <div className="loading-screen">
-        <div className="spinner" />
-        <p>Loading PeopleHub…</p>
-      </div>
-    );
-  }
-
-  if (!authenticated) {
-    return (
-      <main className="login-page">
-        <form className="login-card" onSubmit={handleLogin}>
-          <div className="brand-mark">PH</div>
-          <p className="eyebrow">PRIVATE ADMIN WORKSPACE</p>
-          <h1>Welcome to PeopleHub</h1>
-          <p className="muted">
-            Sign in to securely manage people records.
-          </p>
-
-          <label>
-            Username
-            <input
-              autoComplete="username"
-              value={login.username}
-              onChange={(event) =>
-                setLogin({ ...login, username: event.target.value })
-              }
-              required
-            />
-          </label>
-
-          <label>
-            Password
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={login.password}
-              onChange={(event) =>
-                setLogin({ ...login, password: event.target.value })
-              }
-              required
-            />
-          </label>
-
-          <button className="primary-btn full" disabled={loginLoading}>
-            {loginLoading ? "Signing in…" : "Sign in securely →"}
-          </button>
-
-          <p className="tiny-note">
-            Access is restricted to authorized administrators.
-          </p>
-        </form>
-
-        {toast && <Toast toast={toast} />}
-      </main>
-    );
-  }
-
-  const totalPhotos = items.filter((item) =>
-    IMAGE_FIELDS.some((field) => item[field.url])
+  const recordsWithImages = items.filter((item) =>
+    IMAGE_FIELDS.some((field) => item.images?.[field.key])
   ).length;
 
   return (
@@ -414,18 +204,19 @@ export default function App() {
       <header className="topbar">
         <a className="brand" href="#top">
           <div className="brand-mark">PH</div>
-          <div>
+          <div className="brand-copy">
             <strong>PeopleHub</strong>
-            <span>Private people directory</span>
+            <span>People directory</span>
           </div>
         </a>
 
         <div className="top-actions">
           <label className="search-box">
-            <span>⌕</span>
+            <span className="search-icon">⌕</span>
             <input
+              type="search"
               aria-label="Search records"
-              placeholder="Search name, ID or phone…"
+              placeholder="Search name, ID or phone..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -433,18 +224,16 @@ export default function App() {
 
           <button
             className="icon-btn"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            type="button"
+            onClick={() =>
+              setTheme((current) =>
+                current === "light" ? "dark" : "light"
+              )
+            }
             aria-label="Toggle theme"
+            title="Toggle theme"
           >
             {theme === "light" ? "☾" : "☀"}
-          </button>
-
-          <button
-            className="icon-btn"
-            onClick={handleLogout}
-            title="Sign out"
-          >
-            ↗
           </button>
         </div>
       </header>
@@ -453,18 +242,19 @@ export default function App() {
         <section className="hero">
           <div className="hero-copy">
             <span className="hero-tag">
-              <i /> PRIVATE DIRECTORY
+              <i />
+              YOUR PERSONAL DIRECTORY
             </span>
 
             <h1>
               Every record.
               <br />
-              <em>One secure place.</em>
+              <em>One simple place.</em>
             </h1>
 
             <p>
-              Organize people details and documents with a clear,
-              simple workspace.
+              Manage people details, photos and documents in one organized
+              workspace.
             </p>
 
             <a className="hero-link" href="#records">
@@ -475,9 +265,12 @@ export default function App() {
           <div className="hero-art" aria-hidden="true">
             <div className="orbit orbit-one" />
             <div className="orbit orbit-two" />
+
             <div className="art-card art-card-back">
-              ▦ <span>DOCUMENTS</span>
+              <span className="art-document">▦</span>
+              <span>DOCUMENTS</span>
             </div>
+
             <div className="art-card art-card-front">
               <div className="art-avatar">✦</div>
               <div className="art-lines">
@@ -485,32 +278,58 @@ export default function App() {
                 <b />
                 <b />
               </div>
-              <span className="art-status">● PRIVATE</span>
+              <span className="art-status">● YOUR DIRECTORY</span>
             </div>
+
             <div className="art-dot dot-one" />
             <div className="art-dot dot-two" />
           </div>
 
           <div className="hero-bottom">
-            <span>YOUR WORKSPACE</span>
-            <span>SECURITY-FIRST RECORDS ↗</span>
+            <span>PEOPLEHUB WORKSPACE</span>
+            <span>FRONTEND ONLY · NO LOGIN</span>
           </div>
         </section>
 
         <section className="stats-grid">
-          <Stat icon="▤" label="Total records" value={items.length} />
-          <Stat icon="▧" label="Records with images" value={totalPhotos} />
-          <Stat icon="⌕" label="Search results" value={filteredItems.length} />
+          <article className="stat-card">
+            <span className="stat-icon purple">▤</span>
+            <div>
+              <p>Total records</p>
+              <strong>{items.length}</strong>
+            </div>
+            <small>All saved records</small>
+          </article>
+
+          <article className="stat-card">
+            <span className="stat-icon mint">▧</span>
+            <div>
+              <p>With images</p>
+              <strong>{recordsWithImages}</strong>
+            </div>
+            <small>Records with photos</small>
+          </article>
+
+          <article className="stat-card">
+            <span className="stat-icon amber">⌕</span>
+            <div>
+              <p>Search results</p>
+              <strong>{filteredItems.length}</strong>
+            </div>
+            <small>Matching records</small>
+          </article>
         </section>
 
-        <section className="form-card" id="form">
+        <section className="form-card" id="form-section">
           <div className="section-heading">
             <div>
               <span className="eyebrow">
-                {editingId ? "UPDATE EXISTING ENTRY" : "ADD TO DIRECTORY"}
+                {editingId ? "UPDATE RECORD" : "ADD TO DIRECTORY"}
               </span>
-              <h2>{editingId ? "Edit person record" : "Create a new record"}</h2>
-              <p>Fill in the details and attach relevant documents.</p>
+              <h2>
+                {editingId ? "Edit person record" : "Create a new record"}
+              </h2>
+              <p>Enter the details and select any relevant images.</p>
             </div>
 
             {editingId && (
@@ -524,82 +343,61 @@ export default function App() {
             )}
           </div>
 
-          <form onSubmit={handleSubmit}>
+          <form id="record-form" onSubmit={handleSubmit}>
             <div className="form-grid">
-              <Field label="Full name *">
+              <label className="field">
+                <span>
+                  Full name <b>*</b>
+                </span>
                 <input
+                  name="name"
                   value={form.name}
-                  onChange={(event) =>
-                    setForm({ ...form, name: event.target.value })
-                  }
+                  onChange={handleChange}
                   placeholder="Enter full name"
-                  required
+                  autoComplete="off"
                   maxLength={120}
-                />
-              </Field>
-
-              <Field label="ID number *">
-                <input
-                  value={form.idNo}
-                  onChange={(event) =>
-                    setForm({ ...form, idNo: event.target.value })
-                  }
-                  placeholder="Enter identification number"
                   required
-                  maxLength={80}
                 />
-              </Field>
+              </label>
 
-              <Field label="Phone number *">
+              <label className="field">
+                <span>
+                  ID number <b>*</b>
+                </span>
+                <input
+                  name="idNo"
+                  value={form.idNo}
+                  onChange={handleChange}
+                  placeholder="Enter ID number"
+                  autoComplete="off"
+                  maxLength={80}
+                  required
+                />
+              </label>
+
+              <label className="field">
+                <span>
+                  Phone number <b>*</b>
+                </span>
                 <input
                   type="tel"
+                  name="phone"
                   value={form.phone}
-                  onChange={(event) =>
-                    setForm({ ...form, phone: event.target.value })
-                  }
+                  onChange={handleChange}
                   placeholder="Enter phone number"
-                  required
+                  autoComplete="off"
                   maxLength={30}
+                  required
                 />
-              </Field>
-
-              <Field label={editingId ? "New password (optional)" : "Account password *"}>
-                <div className="password-wrap">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    value={form.password}
-                    onChange={(event) =>
-                      setForm({ ...form, password: event.target.value })
-                    }
-                    placeholder={
-                      editingId
-                        ? "Leave blank to keep current password"
-                        : "At least 12 characters"
-                    }
-                    required={!editingId}
-                    minLength={12}
-                  />
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-                <small className="field-help">
-                  Passwords must be hashed by the backend.
-                </small>
-              </Field>
+              </label>
             </div>
 
             <div className="upload-heading">
               <div>
-                <span className="eyebrow">DOCUMENT LIBRARY</span>
+                <span className="eyebrow">IMAGE LIBRARY</span>
                 <h3>Photos & documents</h3>
               </div>
-              <span className="file-limit">JPG, PNG, WEBP · Max 5 MB each</span>
+              <span className="file-limit">JPG, PNG, WEBP · Max 1.5 MB each</span>
             </div>
 
             <div className="upload-grid">
@@ -610,55 +408,47 @@ export default function App() {
                     <b>{field.label}</b>
                   </div>
 
-                  {previews[field.key] ? (
+                  {images[field.key] ? (
                     <div className="preview-card">
                       <img
-                        src={previews[field.key]}
+                        src={images[field.key]}
                         alt={`${field.label} preview`}
                       />
 
-                      <div className="preview-overlay">
-                        <span>
-                          {files[field.key] ? "New upload" : "Saved image"}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(field)}
-                          aria-label={`Remove ${field.label}`}
-                        >
-                          ×
-                        </button>
-                      </div>
+                      <button
+                        className="remove-image"
+                        type="button"
+                        onClick={() => removeImage(field.key)}
+                        aria-label={`Remove ${field.label}`}
+                      >
+                        ×
+                      </button>
 
-                      <label className="replace-link">
+                      <label
+                        className="replace-link"
+                        htmlFor={`image-${field.key}`}
+                      >
                         Replace image
-                        <input
-                          ref={(element) => {
-                            inputRefs.current[field.key] = element;
-                          }}
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          onChange={(event) =>
-                            handleImage(field.key, event.target.files?.[0])
-                          }
-                        />
                       </label>
+                      <input
+                        className="hidden-file-input"
+                        id={`image-${field.key}`}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => handleImage(event, field.key)}
+                      />
                     </div>
                   ) : (
                     <label className="upload-drop">
                       <input
-                        ref={(element) => {
-                          inputRefs.current[field.key] = element;
-                        }}
+                        id={`image-${field.key}`}
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
-                        onChange={(event) =>
-                          handleImage(field.key, event.target.files?.[0])
-                        }
+                        onChange={(event) => handleImage(event, field.key)}
                       />
                       <span className="upload-plus">＋</span>
                       <b>Upload {field.label.toLowerCase()}</b>
-                      <small>Choose a file from your device</small>
+                      <small>Choose an image from your device</small>
                     </label>
                   )}
                 </div>
@@ -666,7 +456,10 @@ export default function App() {
             </div>
 
             <div className="form-footer">
-              <span className="required-note">* Required fields</span>
+              <span className="required-note">
+                <b>*</b> Required fields
+              </span>
+
               <div className="footer-actions">
                 {editingId && (
                   <button
@@ -674,15 +467,16 @@ export default function App() {
                     className="secondary-btn"
                     onClick={resetForm}
                   >
-                    Discard
+                    Discard changes
                   </button>
                 )}
-                <button className="primary-btn" disabled={loading}>
-                  {loading
-                    ? "Saving…"
+
+                <button className="primary-btn" type="submit" disabled={saving}>
+                  {saving
+                    ? "Saving..."
                     : editingId
-                      ? "Save changes →"
-                      : "Save record →"}
+                    ? "Save changes →"
+                    : "Save record →"}
                 </button>
               </div>
             </div>
@@ -694,16 +488,18 @@ export default function App() {
             <div>
               <span className="eyebrow">YOUR DIRECTORY</span>
               <h2>
-                People records <span className="count-pill">{filteredItems.length}</span>
+                People records{" "}
+                <span className="count-pill">{filteredItems.length}</span>
               </h2>
-              <p>Manage details and attached documents in one place.</p>
+              <p>View, edit or remove your saved records.</p>
             </div>
 
             <button
               className="secondary-btn"
+              type="button"
               onClick={() => {
                 resetForm();
-                document.getElementById("form")?.scrollIntoView({
+                document.getElementById("form-section")?.scrollIntoView({
                   behavior: "smooth",
                 });
               }}
@@ -724,105 +520,100 @@ export default function App() {
             </div>
           ) : (
             <div className="records-grid">
-              {filteredItems.map((item) => (
-                <article className="person-card" key={item._id}>
-                  <div className="person-card-head">
-                    <div className="person-avatar">
-                      {item.userImageUrl ? (
-                        <img src={item.userImageUrl} alt="" />
-                      ) : (
-                        <span>{(item.name || "?").trim().charAt(0).toUpperCase()}</span>
-                      )}
-                    </div>
+              {filteredItems.map((item) => {
+                const attachedCount = IMAGE_FIELDS.filter(
+                  (field) => item.images?.[field.key]
+                ).length;
 
-                    <div className="person-title">
-                      <h3>{item.name}</h3>
-                      <span className="record-id">ID · {item.idNo || "—"}</span>
-                    </div>
-
-                    <span className="secure-chip">● Private</span>
-                  </div>
-
-                  <div className="person-meta">
-                    <div>
-                      <span>PHONE</span>
-                      <b>{item.phone || "—"}</b>
-                    </div>
-                    <div>
-                      <span>DOCUMENTS</span>
-                      <b>
-                        {IMAGE_FIELDS.filter((field) => item[field.url]).length} attached
-                      </b>
-                    </div>
-                  </div>
-
-                  <div className="document-strip">
-                    {IMAGE_FIELDS.map((field) => (
-                      <div className="document-thumb" key={field.key} title={field.label}>
-                        {item[field.url] ? (
-                          <img src={item[field.url]} alt={field.label} />
+                return (
+                  <article className="person-card" key={item.id}>
+                    <div className="person-card-head">
+                      <div className="person-avatar">
+                        {item.images?.userImage ? (
+                          <img src={item.images.userImage} alt={item.name} />
                         ) : (
-                          <span>{field.icon}</span>
+                          <span>
+                            {(item.name || "?").trim().charAt(0).toUpperCase()}
+                          </span>
                         )}
                       </div>
-                    ))}
-                  </div>
 
-                  <div className="person-actions">
-                    <button className="edit-action" onClick={() => startEdit(item)}>
-                      ✎ Edit record
-                    </button>
-                    <button
-                      className="delete-action"
-                      onClick={() => handleDelete(item)}
-                      disabled={loading}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </article>
-              ))}
+                      <div className="person-title">
+                        <h3>{item.name}</h3>
+                        <span className="record-id">ID · {item.idNo}</span>
+                      </div>
+
+                      <span className="local-chip">● Local</span>
+                    </div>
+
+                    <div className="person-meta">
+                      <div>
+                        <span>PHONE</span>
+                        <b>{item.phone || "—"}</b>
+                      </div>
+                      <div>
+                        <span>IMAGES</span>
+                        <b>{attachedCount} attached</b>
+                      </div>
+                    </div>
+
+                    <div className="document-strip">
+                      {IMAGE_FIELDS.map((field) => (
+                        <div
+                          className={`document-thumb ${
+                            item.images?.[field.key] ? "has-image" : ""
+                          }`}
+                          key={field.key}
+                          title={field.label}
+                        >
+                          {item.images?.[field.key] ? (
+                            <img
+                              src={item.images[field.key]}
+                              alt={field.label}
+                            />
+                          ) : (
+                            <span>{field.icon}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="person-actions">
+                      <button
+                        className="edit-action"
+                        type="button"
+                        onClick={() => startEdit(item)}
+                      >
+                        ✎ Edit record
+                      </button>
+
+                      <button
+                        className="delete-action"
+                        type="button"
+                        onClick={() => deleteRecord(item)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
 
         <footer className="page-footer">
-          <span>PEOPLEHUB · PRIVATE DIRECTORY</span>
-          <span>Only store documents you are authorized to manage.</span>
+          <span>PEOPLEHUB · FRONTEND EDITION</span>
+          <span>Records are saved in this browser only.</span>
         </footer>
       </main>
 
-      {toast && <Toast toast={toast} />}
-    </div>
-  );
-}
-
-function Stat({ icon, label, value }) {
-  return (
-    <article className="stat-card">
-      <span className="stat-icon">{icon}</span>
-      <div>
-        <p>{label}</p>
-        <strong>{value.toLocaleString()}</strong>
-      </div>
-    </article>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <label className="field">
-      <span>{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function Toast({ toast }) {
-  return (
-    <div className={`toast ${toast.type}`} role="status">
-      <span>{toast.type === "success" ? "✓" : "!"}</span>
-      {toast.message}
+      {toast && (
+        <div className="toast" role="status">
+          <span>✓</span>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
