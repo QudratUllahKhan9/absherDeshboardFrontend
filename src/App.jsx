@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-const STORAGE_KEY = "peoplehub_records_v4";
+const STORAGE_KEY = "peoplehub_records_v5";
 const THEME_KEY = "peoplehub_theme";
 
 const IMAGE_FIELDS = [
@@ -15,13 +15,27 @@ const IMAGE_FIELDS = [
 
 const EMPTY_FORM = {
   name: "",
-  idNo: "2555290341",
   phone: "",
   password: "",
+  
+  // Passport Information
   passportNo: "PT4133313",
-  passportExpiry: "21/02/2030",
-  iqamaExpiry: "22/07/2027",
+  passportType: "Regular",
+  passportIssueDate: "20/02/2025",
+  passportExpiryDate: "21/02/2030",
+  passportPlaceOfIssue: "Pakistan",
+  passportStatus: "Valid",
+
+  // Resident ID (Iqama) Details
+  idNo: "2555290341",
+  idVersion: "2",
+  iqamaIssueDate: "21/09/2025",
+  iqamaExpiryDate: "22/07/2027",
+
+  // Travel Record & Status
   travelStatus: "Inside the Kingdom",
+  lastTravelDestination: "Pakistan",
+  lastTravelDate: "12/08/2025",
   balance: "0.00 SAR",
 };
 
@@ -136,15 +150,7 @@ export default function App() {
 
     const record = {
       id: editingId || createId(),
-      name: form.name.trim(),
-      idNo: form.idNo.trim(),
-      phone: form.phone.trim(),
-      password: form.password.trim(),
-      passportNo: form.passportNo.trim(),
-      passportExpiry: form.passportExpiry.trim(),
-      iqamaExpiry: form.iqamaExpiry.trim(),
-      travelStatus: form.travelStatus.trim(),
-      balance: form.balance.trim(),
+      ...form,
       images: {
         ...(previousRecord?.images || {}),
         ...images,
@@ -170,13 +176,21 @@ export default function App() {
     setEditingId(item.id);
     setForm({
       name: item.name || "",
-      idNo: item.idNo || "",
       phone: item.phone || "",
       password: item.password || "",
       passportNo: item.passportNo || "",
-      passportExpiry: item.passportExpiry || "",
-      iqamaExpiry: item.iqamaExpiry || "",
+      passportType: item.passportType || "",
+      passportIssueDate: item.passportIssueDate || "",
+      passportExpiryDate: item.passportExpiryDate || "",
+      passportPlaceOfIssue: item.passportPlaceOfIssue || "",
+      passportStatus: item.passportStatus || "",
+      idNo: item.idNo || "",
+      idVersion: item.idVersion || "",
+      iqamaIssueDate: item.iqamaIssueDate || "",
+      iqamaExpiryDate: item.iqamaExpiryDate || "",
       travelStatus: item.travelStatus || "",
+      lastTravelDestination: item.lastTravelDestination || "",
+      lastTravelDate: item.lastTravelDate || "",
       balance: item.balance || "",
     });
     setImages(item.images || {});
@@ -271,7 +285,7 @@ export default function App() {
             </h1>
 
             <p>
-              Manage people details, Iqama/Passport info, passwords, travel records, and documents in one workspace.
+              Manage personal info, Passport, Resident ID (Iqama), and Travel status.
             </p>
 
             <a className="hero-link" href="#records">
@@ -346,7 +360,7 @@ export default function App() {
               <h2>
                 {editingId ? "Edit person record" : "Create a new record"}
               </h2>
-              <p>Enter personal details, contact info, password, and official documents data.</p>
+              <p>Enter all fields extracted from Absher details below.</p>
             </div>
 
             {editingId && (
@@ -361,36 +375,35 @@ export default function App() {
           </div>
 
           <form id="record-form" onSubmit={handleSubmit}>
+            {/* Section 1: Personal & Contact */}
             <div className="upload-heading" style={{ marginTop: 0, borderTop: 0, paddingTop: 0 }}>
               <div>
                 <span className="eyebrow">SECTION 1</span>
-                <h3>Basic, Contact & Password Info</h3>
+                <h3>Personal & Contact Details</h3>
               </div>
             </div>
 
             <div className="form-grid">
               <label className="field">
-                <span>Full name <b>*</b></span>
+                <span>Full Name <b>*</b></span>
                 <input
                   name="name"
                   value={form.name}
                   onChange={handleChange}
                   placeholder="Enter full name"
-                  autoComplete="off"
                   maxLength={120}
                   required
                 />
               </label>
 
               <label className="field">
-                <span>Phone number</span>
+                <span>Phone Number</span>
                 <input
                   type="tel"
                   name="phone"
                   value={form.phone}
                   onChange={handleChange}
                   placeholder="Enter phone number"
-                  autoComplete="off"
                   maxLength={30}
                 />
               </label>
@@ -403,28 +416,92 @@ export default function App() {
                   value={form.password}
                   onChange={handleChange}
                   placeholder="Enter password"
-                  autoComplete="off"
                   maxLength={50}
                 />
               </label>
+            </div>
 
+            {/* Section 2: Passport Information */}
+            <div className="upload-heading">
+              <div>
+                <span className="eyebrow">SECTION 2</span>
+                <h3>Passport Information</h3>
+              </div>
+            </div>
+
+            <div className="form-grid">
               <label className="field">
                 <span>Passport Number</span>
                 <input
                   name="passportNo"
                   value={form.passportNo}
                   onChange={handleChange}
-                  placeholder="Enter passport number"
-                  autoComplete="off"
+                  placeholder="Passport Number"
+                  maxLength={30}
+                />
+              </label>
+
+              <label className="field">
+                <span>Passport Type</span>
+                <input
+                  name="passportType"
+                  value={form.passportType}
+                  onChange={handleChange}
+                  placeholder="Regular"
+                  maxLength={30}
+                />
+              </label>
+
+              <label className="field">
+                <span>Passport Issue Date</span>
+                <input
+                  name="passportIssueDate"
+                  value={form.passportIssueDate}
+                  onChange={handleChange}
+                  placeholder="DD/MM/YYYY"
+                  maxLength={20}
+                />
+              </label>
+
+              <label className="field">
+                <span>Passport Expiry Date</span>
+                <input
+                  name="passportExpiryDate"
+                  value={form.passportExpiryDate}
+                  onChange={handleChange}
+                  placeholder="DD/MM/YYYY"
+                  maxLength={20}
+                />
+              </label>
+
+              <label className="field">
+                <span>Place of Issue</span>
+                <input
+                  name="passportPlaceOfIssue"
+                  value={form.passportPlaceOfIssue}
+                  onChange={handleChange}
+                  placeholder="Pakistan"
+                  maxLength={50}
+                />
+              </label>
+
+              <label className="field">
+                <span>Passport Status</span>
+                <input
+                  name="passportStatus"
+                  value={form.passportStatus}
+                  onChange={handleChange}
+                  placeholder="Valid"
                   maxLength={30}
                 />
               </label>
             </div>
 
+            {/* Section 3: Resident ID (Iqama) Details */}
             <div className="upload-heading">
               <div>
-                <span className="eyebrow">SECTION 2</span>
-                <h3>Absher & Residency Details</h3>
+                <span className="eyebrow">SECTION 3</span>
+                <h3>Resident ID (Iqama) Details</h3>
               </div>
             </div>
 
@@ -435,21 +512,30 @@ export default function App() {
                   name="idNo"
                   value={form.idNo}
                   onChange={handleChange}
-                  placeholder="Enter Iqama number"
-                  autoComplete="off"
+                  placeholder="Iqama Number"
                   maxLength={80}
                   required
                 />
               </label>
 
               <label className="field">
-                <span>Passport Expiry Date</span>
+                <span>ID Version</span>
                 <input
-                  name="passportExpiry"
-                  value={form.passportExpiry}
+                  name="idVersion"
+                  value={form.idVersion}
+                  onChange={handleChange}
+                  placeholder="2"
+                  maxLength={10}
+                />
+              </label>
+
+              <label className="field">
+                <span>Iqama Issue Date</span>
+                <input
+                  name="iqamaIssueDate"
+                  value={form.iqamaIssueDate}
                   onChange={handleChange}
                   placeholder="DD/MM/YYYY"
-                  autoComplete="off"
                   maxLength={20}
                 />
               </label>
@@ -457,24 +543,54 @@ export default function App() {
               <label className="field">
                 <span>Iqama Expiry Date</span>
                 <input
-                  name="iqamaExpiry"
-                  value={form.iqamaExpiry}
+                  name="iqamaExpiryDate"
+                  value={form.iqamaExpiryDate}
                   onChange={handleChange}
                   placeholder="DD/MM/YYYY"
-                  autoComplete="off"
                   maxLength={20}
                 />
               </label>
+            </div>
 
+            {/* Section 4: Travel Record & Status */}
+            <div className="upload-heading">
+              <div>
+                <span className="eyebrow">SECTION 4</span>
+                <h3>Travel Record & Status</h3>
+              </div>
+            </div>
+
+            <div className="form-grid">
               <label className="field">
                 <span>Travel Status</span>
                 <input
                   name="travelStatus"
                   value={form.travelStatus}
                   onChange={handleChange}
-                  placeholder="e.g. Inside the Kingdom"
-                  autoComplete="off"
+                  placeholder="Inside the Kingdom"
                   maxLength={50}
+                />
+              </label>
+
+              <label className="field">
+                <span>Last Travel Destination</span>
+                <input
+                  name="lastTravelDestination"
+                  value={form.lastTravelDestination}
+                  onChange={handleChange}
+                  placeholder="Pakistan"
+                  maxLength={50}
+                />
+              </label>
+
+              <label className="field">
+                <span>Last Travel Date</span>
+                <input
+                  name="lastTravelDate"
+                  value={form.lastTravelDate}
+                  onChange={handleChange}
+                  placeholder="DD/MM/YYYY"
+                  maxLength={20}
                 />
               </label>
 
@@ -484,17 +600,17 @@ export default function App() {
                   name="balance"
                   value={form.balance}
                   onChange={handleChange}
-                  placeholder="e.g. 0.00 SAR"
-                  autoComplete="off"
+                  placeholder="0.00 SAR"
                   maxLength={30}
                 />
               </label>
             </div>
 
+            {/* Section 5: Photos & Documents */}
             <div className="upload-heading">
               <div>
-                <span className="eyebrow">SECTION 3</span>
-                <h3>Photos & documents</h3>
+                <span className="eyebrow">SECTION 5</span>
+                <h3>Photos & Documents</h3>
               </div>
               <span className="file-limit">JPG, PNG, WEBP · Max 1.5 MB each</span>
             </div>
@@ -651,19 +767,19 @@ export default function App() {
                         <b>{item.phone || "—"} / {item.password ? "••••" : "—"}</b>
                       </div>
                       <div>
-                        <span>PASSPORT</span>
+                        <span>PASSPORT NO.</span>
                         <b>{item.passportNo || "—"}</b>
                       </div>
                     </div>
 
                     <div className="person-meta" style={{ marginTop: "8px" }}>
                       <div>
-                        <span>TRAVEL STATUS</span>
-                        <b>{item.travelStatus || "—"}</b>
+                        <span>IQAMA EXPIRY</span>
+                        <b>{item.iqamaExpiryDate || "—"}</b>
                       </div>
                       <div>
-                        <span>BALANCE</span>
-                        <b>{item.balance || "—"}</b>
+                        <span>TRAVEL STATUS</span>
+                        <b>{item.travelStatus || "—"}</b>
                       </div>
                     </div>
 
