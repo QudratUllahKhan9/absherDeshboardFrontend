@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 
-const STORAGE_KEY = "peoplehub_records_v1";
+const STORAGE_KEY = "peoplehub_records_v2";
 const THEME_KEY = "peoplehub_theme";
 
 const IMAGE_FIELDS = [
@@ -15,8 +15,13 @@ const IMAGE_FIELDS = [
 
 const EMPTY_FORM = {
   name: "",
-  idNo: "2555290341", // Populated with Iqama Number from Absher data[cite: 3]
+  idNo: "2555290341",        // Iqama Number
   phone: "",
+  passportNo: "PT4133313",   // Passport Number
+  passportExpiry: "21/02/2030",
+  iqamaExpiry: "22/07/2027",
+  travelStatus: "Inside the Kingdom",
+  balance: "0.00 SAR",
 };
 
 function readRecords() {
@@ -119,7 +124,7 @@ export default function App() {
   function handleSubmit(event) {
     event.preventDefault();
 
-    if (!form.name.trim() || !form.idNo.trim() || !form.phone.trim()) {
+    if (!form.name.trim() || !form.idNo.trim()) {
       notify("Please complete all required fields.");
       return;
     }
@@ -133,6 +138,11 @@ export default function App() {
       name: form.name.trim(),
       idNo: form.idNo.trim(),
       phone: form.phone.trim(),
+      passportNo: form.passportNo.trim(),
+      passportExpiry: form.passportExpiry.trim(),
+      iqamaExpiry: form.iqamaExpiry.trim(),
+      travelStatus: form.travelStatus.trim(),
+      balance: form.balance.trim(),
       images: {
         ...(previousRecord?.images || {}),
         ...images,
@@ -160,6 +170,11 @@ export default function App() {
       name: item.name || "",
       idNo: item.idNo || "",
       phone: item.phone || "",
+      passportNo: item.passportNo || "",
+      passportExpiry: item.passportExpiry || "",
+      iqamaExpiry: item.iqamaExpiry || "",
+      travelStatus: item.travelStatus || "",
+      balance: item.balance || "",
     });
     setImages(item.images || {});
 
@@ -189,7 +204,7 @@ export default function App() {
     if (!term) return items;
 
     return items.filter((item) =>
-      [item.name, item.idNo, item.phone].some((value) =>
+      [item.name, item.idNo, item.phone, item.passportNo].some((value) =>
         String(value || "").toLowerCase().includes(term)
       )
     );
@@ -216,7 +231,7 @@ export default function App() {
             <input
               type="search"
               aria-label="Search records"
-              placeholder="Search name, ID or phone..."
+              placeholder="Search name, ID or passport..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -253,7 +268,7 @@ export default function App() {
             </h1>
 
             <p>
-              Manage people details, photos, passport details (PT4133313)[cite: 1], and documents in one organized workspace.
+              Manage people details, Iqama/Passport info, travel records, and documents in one workspace.
             </p>
 
             <a className="hero-link" href="#records">
@@ -328,7 +343,7 @@ export default function App() {
               <h2>
                 {editingId ? "Edit person record" : "Create a new record"}
               </h2>
-              <p>Enter the details and select any relevant images.</p>
+              <p>Enter the personal, passport, and residency details.</p>
             </div>
 
             {editingId && (
@@ -345,9 +360,7 @@ export default function App() {
           <form id="record-form" onSubmit={handleSubmit}>
             <div className="form-grid">
               <label className="field">
-                <span>
-                  Full name <b>*</b>
-                </span>
+                <span>Full name <b>*</b></span>
                 <input
                   name="name"
                   value={form.name}
@@ -360,14 +373,12 @@ export default function App() {
               </label>
 
               <label className="field">
-                <span>
-                  ID number (Iqama) <b>*</b>
-                </span>
+                <span>Iqama Number <b>*</b></span>
                 <input
                   name="idNo"
                   value={form.idNo}
                   onChange={handleChange}
-                  placeholder="Enter ID number"
+                  placeholder="Enter Iqama number"
                   autoComplete="off"
                   maxLength={80}
                   required
@@ -375,9 +386,7 @@ export default function App() {
               </label>
 
               <label className="field">
-                <span>
-                  Phone number <b>*</b>
-                </span>
+                <span>Phone number</span>
                 <input
                   type="tel"
                   name="phone"
@@ -386,7 +395,66 @@ export default function App() {
                   placeholder="Enter phone number"
                   autoComplete="off"
                   maxLength={30}
-                  required
+                />
+              </label>
+
+              <label className="field">
+                <span>Passport Number</span>
+                <input
+                  name="passportNo"
+                  value={form.passportNo}
+                  onChange={handleChange}
+                  placeholder="Enter passport number"
+                  autoComplete="off"
+                  maxLength={30}
+                />
+              </label>
+
+              <label className="field">
+                <span>Passport Expiry Date</span>
+                <input
+                  name="passportExpiry"
+                  value={form.passportExpiry}
+                  onChange={handleChange}
+                  placeholder="DD/MM/YYYY"
+                  autoComplete="off"
+                  maxLength={20}
+                />
+              </label>
+
+              <label className="field">
+                <span>Iqama Expiry Date</span>
+                <input
+                  name="iqamaExpiry"
+                  value={form.iqamaExpiry}
+                  onChange={handleChange}
+                  placeholder="DD/MM/YYYY"
+                  autoComplete="off"
+                  maxLength={20}
+                />
+              </label>
+
+              <label className="field">
+                <span>Travel Status</span>
+                <input
+                  name="travelStatus"
+                  value={form.travelStatus}
+                  onChange={handleChange}
+                  placeholder="e.g. Inside the Kingdom"
+                  autoComplete="off"
+                  maxLength={50}
+                />
+              </label>
+
+              <label className="field">
+                <span>Operations Balance</span>
+                <input
+                  name="balance"
+                  value={form.balance}
+                  onChange={handleChange}
+                  placeholder="e.g. 0.00 SAR"
+                  autoComplete="off"
+                  maxLength={30}
                 />
               </label>
             </div>
@@ -513,7 +581,7 @@ export default function App() {
               <h3>{query ? "No matching records" : "Your directory is ready"}</h3>
               <p>
                 {query
-                  ? "Try another name, ID number or phone number."
+                  ? "Try another name, ID number or passport number."
                   : "Add your first record using the form above."}
               </p>
             </div>
@@ -539,7 +607,7 @@ export default function App() {
 
                       <div className="person-title">
                         <h3>{item.name}</h3>
-                        <span className="record-id">ID · {item.idNo}</span>
+                        <span className="record-id">Iqama · {item.idNo}</span>
                       </div>
 
                       <span className="local-chip">● Local</span>
@@ -547,16 +615,27 @@ export default function App() {
 
                     <div className="person-meta">
                       <div>
-                        <span>PHONE</span>
-                        <b>{item.phone || "—"}</b>
+                        <span>PASSPORT</span>
+                        <b>{item.passportNo || "—"}</b>
                       </div>
                       <div>
-                        <span>IMAGES</span>
-                        <b>{attachedCount} attached</b>
+                        <span>IQAMA EXP</span>
+                        <b>{item.iqamaExpiry || "—"}</b>
                       </div>
                     </div>
 
-                    <div className="document-strip">
+                    <div className="person-meta" style={{ marginTop: "8px" }}>
+                      <div>
+                        <span>TRAVEL STATUS</span>
+                        <b>{item.travelStatus || "—"}</b>
+                      </div>
+                      <div>
+                        <span>BALANCE</span>
+                        <b>{item.balance || "—"}</b>
+                      </div>
+                    </div>
+
+                    <div className="document-strip" style={{ marginTop: "15px" }}>
                       {IMAGE_FIELDS.map((field) => (
                         <div
                           className={`document-thumb ${
