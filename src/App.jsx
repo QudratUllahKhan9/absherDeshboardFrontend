@@ -9,7 +9,7 @@ const THEME_KEY = "peoplehub_theme";
 
 const IMAGE_FIELDS = [
   { key: "userImage", label: "Profile Photo", icon: "👤" },
-  { key: "cardImage", label: "ID Card", icon: "🪪" },
+  // { key: "cardImage", label: "ID Card", icon: "🪪" },
   { key: "iqamaImage", label: "Iqama", icon: "📄" },
   { key: "qrCode1", label: "QR Code 1", icon: "▦" },
   {
