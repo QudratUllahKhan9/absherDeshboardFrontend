@@ -26,6 +26,25 @@ const EMPTY_FORM = {
   phone: "",
   password: "",
 
+  // Personal Details (Absher)
+  birthCity: "",
+  birthCountry: "Pakistan",
+  dateOfBirth: "01-01-2000",
+  maritalStatus: "Single",
+  serviceTransfers: "YES",
+  religion: "Islam",
+  workPermit: "",
+  fingerprintRegistered: "",
+
+  // Sponsor Details
+  employerName: "Afrah Ayed Al-Fatih Contracting Company",
+  employerIdNumber: "7048785963",
+
+  // Health Insurance
+  insuranceIssueDate: "2026/09/20",
+  insuranceExpiryDate: "2027/09/19",
+  bloodType: "",
+
   // Passport Information
   passportNo: "PT4133313",
   passportType: "Regular",
@@ -383,6 +402,19 @@ export default function App() {
       phone: item.phone || "",
       // Password is intentionally not returned by a secure backend.
       password: "",
+      birthCity: item.birthCity || "",
+      birthCountry: item.birthCountry || "",
+      dateOfBirth: item.dateOfBirth || "",
+      maritalStatus: item.maritalStatus || "",
+      serviceTransfers: item.serviceTransfers || "",
+      religion: item.religion || "",
+      workPermit: item.workPermit || "",
+      fingerprintRegistered: item.fingerprintRegistered || "",
+      employerName: item.employerName || "",
+      employerIdNumber: item.employerIdNumber || "",
+      insuranceIssueDate: item.insuranceIssueDate || "",
+      insuranceExpiryDate: item.insuranceExpiryDate || "",
+      bloodType: item.bloodType || "",
       passportNo: item.passportNo || "",
       passportType: item.passportType || "",
       passportIssueDate: item.passportIssueDate || "",
@@ -688,6 +720,105 @@ export default function App() {
             <div className="upload-heading">
               <div>
                 <span className="eyebrow">SECTION 2</span>
+                <h3>Personal Details</h3>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label className="field">
+                <span>Birth City</span>
+
+                <input
+                  name="birthCity"
+                  value={form.birthCity}
+                  onChange={handleChange}
+                  placeholder="Birth city"
+                  maxLength={50}
+                />
+              </label>
+              <label className="field">
+                <span>Birth Country/Region</span>
+
+                <input
+                  name="birthCountry"
+                  value={form.birthCountry}
+                  onChange={handleChange}
+                  placeholder="Pakistan"
+                  maxLength={50}
+                />
+              </label>
+              <label className="field">
+                <span>Date of Birth</span>
+
+                <input
+                  name="dateOfBirth"
+                  value={form.dateOfBirth}
+                  onChange={handleChange}
+                  placeholder="DD-MM-YYYY"
+                  maxLength={20}
+                />
+              </label>
+              <label className="field">
+                <span>Marital Status</span>
+
+                <input
+                  name="maritalStatus"
+                  value={form.maritalStatus}
+                  onChange={handleChange}
+                  placeholder="Single"
+                  maxLength={30}
+                />
+              </label>
+              <label className="field">
+                <span>Number of Service Transfers</span>
+
+                <input
+                  name="serviceTransfers"
+                  value={form.serviceTransfers}
+                  onChange={handleChange}
+                  placeholder="YES"
+                  maxLength={20}
+                />
+              </label>
+              <label className="field">
+                <span>Religion</span>
+
+                <input
+                  name="religion"
+                  value={form.religion}
+                  onChange={handleChange}
+                  placeholder="Islam"
+                  maxLength={30}
+                />
+              </label>
+              <label className="field">
+                <span>Work Permit</span>
+
+                <input
+                  name="workPermit"
+                  value={form.workPermit}
+                  onChange={handleChange}
+                  placeholder="Work permit"
+                  maxLength={50}
+                />
+              </label>
+              <label className="field">
+                <span>Fingerprint Registered</span>
+
+                <input
+                  name="fingerprintRegistered"
+                  value={form.fingerprintRegistered}
+                  onChange={handleChange}
+                  placeholder="Registered / Not registered"
+                  maxLength={30}
+                />
+              </label>
+            </div>
+
+            {/* Section 3 */}
+            <div className="upload-heading">
+              <div>
+                <span className="eyebrow">SECTION 3</span>
                 <h3>Passport Information</h3>
               </div>
             </div>
@@ -766,10 +897,10 @@ export default function App() {
               </label>
             </div>
 
-            {/* Section 3 */}
+            {/* Section 4 */}
             <div className="upload-heading">
               <div>
-                <span className="eyebrow">SECTION 3</span>
+                <span className="eyebrow">SECTION 4</span>
                 <h3>Resident ID (Iqama) Details</h3>
               </div>
             </div>
@@ -827,10 +958,87 @@ export default function App() {
               </label>
             </div>
 
-            {/* Section 4 */}
+            {/* Section 5 */}
             <div className="upload-heading">
               <div>
-                <span className="eyebrow">SECTION 4</span>
+                <span className="eyebrow">SECTION 5</span>
+                <h3>Sponsor Details</h3>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label className="field">
+                <span>Employer Name</span>
+
+                <input
+                  name="employerName"
+                  value={form.employerName}
+                  onChange={handleChange}
+                  placeholder="Employer name"
+                  maxLength={120}
+                />
+              </label>
+              <label className="field">
+                <span>Employer ID Number</span>
+
+                <input
+                  name="employerIdNumber"
+                  value={form.employerIdNumber}
+                  onChange={handleChange}
+                  placeholder="Employer ID number"
+                  maxLength={30}
+                />
+              </label>
+            </div>
+
+            {/* Section 6 */}
+            <div className="upload-heading">
+              <div>
+                <span className="eyebrow">SECTION 6</span>
+                <h3>Health Insurance</h3>
+              </div>
+            </div>
+
+            <div className="form-grid">
+              <label className="field">
+                <span>Insurance Issue Date</span>
+
+                <input
+                  name="insuranceIssueDate"
+                  value={form.insuranceIssueDate}
+                  onChange={handleChange}
+                  placeholder="YYYY/MM/DD"
+                  maxLength={20}
+                />
+              </label>
+              <label className="field">
+                <span>Insurance Expiry Date</span>
+
+                <input
+                  name="insuranceExpiryDate"
+                  value={form.insuranceExpiryDate}
+                  onChange={handleChange}
+                  placeholder="YYYY/MM/DD"
+                  maxLength={20}
+                />
+              </label>
+              <label className="field">
+                <span>Blood Type</span>
+
+                <input
+                  name="bloodType"
+                  value={form.bloodType}
+                  onChange={handleChange}
+                  placeholder="Blood type"
+                  maxLength={10}
+                />
+              </label>
+            </div>
+
+            {/* Section 7 */}
+            <div className="upload-heading">
+              <div>
+                <span className="eyebrow">SECTION 7</span>
                 <h3>Travel Record &amp; Status</h3>
               </div>
             </div>
@@ -885,10 +1093,10 @@ export default function App() {
               </label>
             </div>
 
-            {/* Section 5: Images */}
+            {/* Section 8: Images */}
             <div className="upload-heading">
               <div>
-                <span className="eyebrow">SECTION 5</span>
+                <span className="eyebrow">SECTION 8</span>
                 <h3>Photos &amp; Documents</h3>
               </div>
 
@@ -1093,6 +1301,15 @@ export default function App() {
                     className="person-meta"
                     style={{ marginTop: "8px" }}
                   >
+                    <div>
+                      <span>EMPLOYER</span>
+                      <b>{item.employerName || "—"}</b>
+                    </div>
+
+                    <div>
+                      <span>INSURANCE EXPIRY</span>
+                      <b>{item.insuranceExpiryDate || "—"}</b>
+                    </div>
                     <div>
                       <span>IQAMA EXPIRY</span>
                       <b>{item.iqamaExpiryDate || "—"}</b>
